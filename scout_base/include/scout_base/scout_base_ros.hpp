@@ -31,6 +31,7 @@ class ScoutBaseRos : public rclcpp::Node {
   std::string odom_frame_;
   std::string base_frame_;
   std::string odom_topic_name_;
+  bool publish_tf_ = true;
 
   bool is_scout_mini_ = false;
   bool is_omni_wheel_ = false;
@@ -43,7 +44,7 @@ class ScoutBaseRos : public rclcpp::Node {
   std::shared_ptr<ScoutMiniOmniRobot> omni_robot_;
 
   std::atomic<bool> keep_running_;
-
+  
   void LoadParameters();
 };
 }  // namespace westonrobot

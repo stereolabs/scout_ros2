@@ -35,6 +35,7 @@ class ScoutMessenger {
   void SetOdometryFrame(std::string frame) { odom_frame_ = frame; }
   void SetBaseFrame(std::string frame) { base_frame_ = frame; }
   void SetOdometryTopicName(std::string name) { odom_topic_name_ = name; }
+  void SetPublishTf(bool publish_tf) { publish_tf_ = publish_tf; }
 
   void SetSimulationMode(int loop_rate) {
     simulated_robot_ = true;
@@ -139,6 +140,7 @@ class ScoutMessenger {
 
   bool simulated_robot_ = false;
   int sim_control_rate_ = 50;
+  bool publish_tf_ = true;
 
   std::mutex twist_mutex_;
   geometry_msgs::msg::Twist current_twist_;
@@ -249,35 +251,43 @@ class ScoutMessenger {
     geometry_msgs::msg::Quaternion odom_quat =
         createQuaternionMsgFromYaw(theta_);
 
-    // publish tf transformation
-    geometry_msgs::msg::TransformStamped tf_msg;
-    tf_msg.header.stamp = current_time_;
-    tf_msg.header.frame_id = odom_frame_;
-    tf_msg.child_frame_id = base_frame_;
 
-    tf_msg.transform.translation.x = position_x_;
-    tf_msg.transform.translation.y = position_y_;
-    tf_msg.transform.translation.z = 0.0;
-    tf_msg.transform.rotation = odom_quat;
+    if (publish_tf_)
+    {
+      // publish tf transformation
+      geometry_msgs::msg::TransformStamped tf_msg;
+      tf_msg.header.stamp = current_time_;
+      tf_msg.header.frame_id = odom_frame_;
+      tf_msg.child_frame_id = base_frame_;
 
-    tf_broadcaster_->sendTransform(tf_msg);
+      tf_msg.transform.translation.x = position_x_;
+      tf_msg.transform.translation.y = position_y_;
+      tf_msg.transform.translation.z = 0.0;
+      tf_msg.transform.rotation = odom_quat;
+      
+      tf_broadcaster_->sendTransform(tf_msg);
+    }
+    
+    auto sub_count = odom_pub_->get_subscription_count();
+    if (sub_count > 0)
+    {
+      // publish odometry and tf messages
+      nav_msgs::msg::Odometry odom_msg;
+      odom_msg.header.stamp = current_time_;
+      odom_msg.header.frame_id = odom_frame_;
+      odom_msg.child_frame_id = base_frame_;
 
-    // publish odometry and tf messages
-    nav_msgs::msg::Odometry odom_msg;
-    odom_msg.header.stamp = current_time_;
-    odom_msg.header.frame_id = odom_frame_;
-    odom_msg.child_frame_id = base_frame_;
+      odom_msg.pose.pose.position.x = position_x_;
+      odom_msg.pose.pose.position.y = position_y_;
+      odom_msg.pose.pose.position.z = 0.0;
+      odom_msg.pose.pose.orientation = odom_quat;
 
-    odom_msg.pose.pose.position.x = position_x_;
-    odom_msg.pose.pose.position.y = position_y_;
-    odom_msg.pose.pose.position.z = 0.0;
-    odom_msg.pose.pose.orientation = odom_quat;
+      odom_msg.twist.twist.linear.x = linear_speed;
+      odom_msg.twist.twist.linear.y = lateral_speed;
+      odom_msg.twist.twist.angular.z = angular_speed;
 
-    odom_msg.twist.twist.linear.x = linear_speed;
-    odom_msg.twist.twist.linear.y = lateral_speed;
-    odom_msg.twist.twist.angular.z = angular_speed;
-
-    odom_pub_->publish(odom_msg);
+      odom_pub_->publish(odom_msg);
+    }
   }
 };
 }  // namespace westonrobot

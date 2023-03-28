@@ -21,6 +21,9 @@ def generate_launch_description():
                                                 description='Base link frame id')
     odom_topic_arg = DeclareLaunchArgument('odom_topic_name', default_value='odom',
                                            description='Odometry topic name')
+    
+    publish_tf_arg = DeclareLaunchArgument('publish_tf', default_value='true',
+                                                 description='Specifies whether the tf is published.')
 
     is_scout_mini_arg = DeclareLaunchArgument('is_scout_mini', default_value='false',
                                           description='Scout mini model')
@@ -29,8 +32,10 @@ def generate_launch_description():
 
     simulated_robot_arg = DeclareLaunchArgument('simulated_robot', default_value='false',
                                                    description='Whether running with simulator')
+    
     sim_control_rate_arg = DeclareLaunchArgument('control_rate', default_value='50',
                                                  description='Simulation control loop update rate')
+    
     
     scout_base_node = launch_ros.actions.Node(
         package='scout_base',
@@ -43,6 +48,7 @@ def generate_launch_description():
                 'odom_frame': launch.substitutions.LaunchConfiguration('odom_frame'),
                 'base_frame': launch.substitutions.LaunchConfiguration('base_frame'),
                 'odom_topic_name': launch.substitutions.LaunchConfiguration('odom_topic_name'),
+                'publish_tf': launch.substitutions.LaunchConfiguration('publish_tf'),
                 'is_scout_mini': launch.substitutions.LaunchConfiguration('is_scout_mini'),
                 'is_omni_wheel': launch.substitutions.LaunchConfiguration('is_omni_wheel'),
                 'simulated_robot': launch.substitutions.LaunchConfiguration('simulated_robot'),
@@ -55,6 +61,7 @@ def generate_launch_description():
         odom_frame_arg,
         base_link_frame_arg,
         odom_topic_arg,
+        publish_tf_arg,
         is_scout_mini_arg,
         is_omni_wheel_arg,
         simulated_robot_arg,
